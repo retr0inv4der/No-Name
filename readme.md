@@ -26,19 +26,23 @@ Maybe later I will try to write this robot for other operating systems
 <br />
 
 ## Installation:
-I am using ubuntu so you can only use these commands on debian based systems. If you are using another system, find a way to install the following packages in your system and If anything goes wrong, just Google it.<br />
-First you should install required python libraries using `pip3 install --upgrade -r requirements.txt`<br />
-then install following packages:
-
+First, install the required system dependencies:
 ```bash
-sudo apt install python3-wheel python3-setuptools python3-pip swig
-sudo apt install espeak ffmpeg python3-pyqt5 python3-alsaaudio python3-pyaudio python3-pocketsphinx python3-gi
+sudo apt install libgirepository-2.0-dev libglib2.0-dev libasound2-dev portaudio19-dev libcairo2-dev libcairo2
 ```
-<!-- 
-Some errors may occur due to C-Python compilers and libraries
 
-sudo apt install libcairo2 libcairo2-dev portaudio19-dev libasound2-dev libespeak1 
--->
+Create a virtual env : 
+```bash
+python -m venv venv
+source venv/bin/activate
+```
+
+
+Then install the required Python libraries:
+```bash
+pip3 install --upgrade -r requirements.txt
+```
+
 
 ## Run:
 You can run different scripts for different modes:
@@ -50,8 +54,7 @@ You can run different scripts for different modes:
 just run one of them an enjoy.
 <br />
 
-## DesktopShortcut:
-for creating the Soldier's icon in desktop and your application menu, you have to copy [soldier.desktop](soldier.desktop) to `/home/your username/.local/share/applications`. (Don't forget to edit desktop file before copying it!)
+
 
 ## Examples
 
