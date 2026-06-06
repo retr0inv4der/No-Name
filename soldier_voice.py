@@ -1,5 +1,4 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+import requests
 import speech_recognition as sr
 from gtts import gTTS
 import aiml
@@ -8,13 +7,27 @@ import subprocess
 import whisper
 import numpy as np
 import tempfile
+import pyttsx3
 
 
 
 
 class bot : 
+    def ping(self):
+        try:
+            r = requests.get("https://google.com/", timeout=3)
+            self.internet = r.status_code == 200
+        except requests.exceptions.ConnectionError:
+            self.internet = False
+        except requests.exceptions.Timeout:
+            self.internet = False
+    
     def __init__(self):
+        self.internet = False
         self.model = whisper.load_model("base")
+        self.ping()
+        if not self.internet : 
+            self.offline_engine = pyttsx3.init()
 
 
 
@@ -36,24 +49,22 @@ class bot :
         print(data["text"])
         return data["text"]
 
-    def speak(self , text ,):
-        if self.internet == "online":
-            try :
-                tts = gTTS(text=text, lang='en')
-                tts.save("temp_soundtrack_tts.mp3")
-            except : 
-                raise Exception("Fetch Error")
-            subprocess.run(["ffmpeg" , "-i" , "temp_soundtrack_tts.mp3" , "temp_soundtrack_tts.wav" , "-y"])
-            
-            subprocess.run(["paplay" , "temp_soundtrack_tts.wav"])
+    def speak(self , text ):
+        if self.internet : 
+            tts = gTTS(text=text, lang='en')
+            tts.save("temp_soundtrack_tts.mp3")
+        else : 
+            self.offline_engine.say(text)
+            self.offline_engine.runAndWait()
+
+        subprocess.run(["ffmpeg" , "-i" , "temp_soundtrack_tts.mp3" , "temp_soundtrack_tts.wav" , "-y"])
+        
+        subprocess.run(["paplay" , "temp_soundtrack_tts.wav"])
             
         
 
 
     def mainloop(self):
-        #init
-        
-
         kernel = aiml.Kernel()
         if os.path.isfile("bot_brain.brn"):
             kernel.bootstrap(brainFile = "bot_brain.brn")
