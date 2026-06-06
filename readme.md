@@ -40,7 +40,7 @@ source venv/bin/activate
 
 Then install the required Python libraries:
 ```bash
-pip3 install --upgrade -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 

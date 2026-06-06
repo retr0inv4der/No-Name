@@ -1,69 +1,70 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+import requests
 import speech_recognition as sr
-import pyttsx3
 from gtts import gTTS
-from pygame import mixer
-import random
 import aiml
 import os
-import time
-import sys
 import subprocess
+import whisper
+import numpy as np
+import tempfile
+import pyttsx3
+
+
+
 
 class bot : 
-    def __init__(self):
-        self.internet = None 
-  
-
     def ping(self):
-        
         try:
-            urlopen('http://google.com', timeout=1)
-            self.internet = "online"
-            return True
-        except URLError as err:
-            self.internet = "offline"
-            return False
+            r = requests.get("https://google.com/", timeout=3)
+            self.internet = r.status_code == 200
+        except requests.exceptions.ConnectionError:
+            self.internet = False
+        except requests.exceptions.Timeout:
+            self.internet = False
+    
+    def __init__(self):
+        self.internet = False
+        self.model = whisper.load_model("base")
+        self.ping()
+        if not self.internet : 
+            self.offline_engine = pyttsx3.init()
+
 
 
     def listen(self):
-        
         r = sr.Recognizer()
         with sr.Microphone() as source:
             print("I am listening: ")
             audio = r.listen(source)
-        try:
-            if self.internet == "online":
-                data = r.recognize_google(audio) 
-                print(data)
-                return  data
-            else:
-                data = r.recognize_sphinx(audio)
-                print(data)
-                return  data
-        except sr.UnknownValueError:
-            self.speak("I couldn't understand what you said! Would you like to repeat?")
-            return(self.listen())
-        except sr.RequestError as e:
-            print("Could not request results from speech service; {0}".format(e))
+        
+        # Save to a temporary WAV file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            temp_file.write(audio.get_wav_data())
+            temp_path = temp_file.name
+        
+        # Load with Whisper
+        data = self.model.transcribe(temp_path)
+        
 
-    def speak(self , text ,):
-        if self.internet == "online":
-            try :
-                tts = gTTS(text=text, lang='en')
-                tts.save("temp_soundtrack_tts.mp3")
-            except : 
-                raise Exception("Fetch Error")
-            subprocess.run(["ffmpeg" , "-i" , "temp_soundtrack_tts.mp3" , "temp_soundtrack_tts.wav" , "-y"])
-            
-            subprocess.run(["paplay" , "temp_soundtrack_tts.wav"])
+        print(data["text"])
+        return data["text"]
+
+    def speak(self , text ):
+        if self.internet : 
+            tts = gTTS(text=text, lang='en')
+            tts.save("temp_soundtrack_tts.mp3")
+        else : 
+            self.offline_engine.say(text)
+            self.offline_engine.runAndWait()
+
+        subprocess.run(["ffmpeg" , "-i" , "temp_soundtrack_tts.mp3" , "temp_soundtrack_tts.wav" , "-y"])
+        
+        subprocess.run(["paplay" , "temp_soundtrack_tts.wav"])
             
         
 
 
     def mainloop(self):
-        self.ping()
         kernel = aiml.Kernel()
         if os.path.isfile("bot_brain.brn"):
             kernel.bootstrap(brainFile = "bot_brain.brn")
